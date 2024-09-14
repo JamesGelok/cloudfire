@@ -1,13 +1,27 @@
 #ifndef RENDERABLE_H
 #define RENDERABLE_H
 
+#include "glad/glad.h" // Add this to ensure GLuint is defined
+#include <glm/glm.hpp>
+#include <vector>
+
+struct Vertex {
+  glm::vec2 position;
+  glm::vec3 color;
+};
+
 struct Renderable {
   float width;
   float height;
-  float r, g, b;
-  Renderable(float _width = 1.0f, float _height = 1.0f, float _r = 1.0f,
-             float _g = 1.0f, float _b = 1.0f)
-      : width(_width), height(_height), r(_r), g(_g), b(_b) {}
+  glm::vec3 color;
+
+  // Vertex data
+  std::vector<Vertex> vertices;
+  GLuint VAO, VBO;
+
+  Renderable(float _width = 1.0f, float _height = 1.0f, float r = 1.0f,
+             float g = 1.0f, float b = 1.0f)
+      : width(_width), height(_height), color(r, g, b), VAO(0), VBO(0) {}
 };
 
 #endif // RENDERABLE_H

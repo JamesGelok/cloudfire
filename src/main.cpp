@@ -1,15 +1,15 @@
+#include "./WindowConstants.h"
 #include "./core/Entity.h"
 #include "./core/EntityInitializer.h"
 #include "./systems/InputSystem.h"
 #include "./systems/MovementSystem.h"
 #include "./systems/PhysicsSystem.h"
 #include "./systems/RenderSystem.h"
+#include "glad/glad.h" // Include GLAD before GLFW
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
 
-const int WINDOW_WIDTH = 800;
-const int WINDOW_HEIGHT = 600;
 const float TARGET_FPS = 60.0f;
 const float TARGET_FRAME_TIME = 1.0f / TARGET_FPS;
 
@@ -23,6 +23,17 @@ bool initOpenGL() {
     return false;
   }
 
+  // Request OpenGL 3.3 Core Profile
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+  // If on macOS, uncomment the following line
+  glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
+  // Enable double buffering explicitly
+  glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE); // Ensure double buffering
+
   window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ECS Physics Box",
                             nullptr, nullptr);
   if (!window) {
@@ -32,8 +43,18 @@ bool initOpenGL() {
   }
 
   glfwMakeContextCurrent(window);
+
+  // Initialize GLAD before calling any OpenGL functions
+  if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+    std::cerr << "Failed to initialize GLAD" << std::endl;
+    return false;
+  }
+
+  // Print OpenGL version (optional for debugging)
+  std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
+
+  // Set the viewport to cover the whole window
   glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
-  glOrtho(0, WINDOW_WIDTH, 0, WINDOW_HEIGHT, -1, 1);
 
   return true;
 }
@@ -47,6 +68,9 @@ int main() {
   if (!initOpenGL()) {
     return -1;
   }
+
+  // Enable VSync (set to 1 for enabling VSync)
+  glfwSwapInterval(1);
 
   // Initialize entities
   initializeEntities(entityManager, componentManager);
@@ -70,13 +94,21 @@ int main() {
     glfwPollEvents();
     inputSystem.update(window);
 
+    // Clear the screen before drawing (ensure back buffer is cleared)
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Game logic update
     while (accumulator >= TARGET_FRAME_TIME) {
       movementSystem.update(TARGET_FRAME_TIME, entityManager, componentManager);
       physicsSystem.update(TARGET_FRAME_TIME, entityManager, componentManager);
       accumulator -= TARGET_FRAME_TIME;
     }
 
+    // Render the scene
     renderSystem.update(deltaTime, entityManager, componentManager);
+
+    // Swap the buffers (show the rendered frame)
+    glfwSwapBuffers(window); // This swaps the front and back buffers
   }
 
   cleanup();

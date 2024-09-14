@@ -1,6 +1,7 @@
 #ifndef INPUT_SYSTEM_H
 #define INPUT_SYSTEM_H
 
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <unordered_map>
 
