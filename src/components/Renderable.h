@@ -1,12 +1,12 @@
 #ifndef RENDERABLE_H
 #define RENDERABLE_H
 
-#include "glad/glad.h" // Add this to ensure GLuint is defined
+#include "glad/glad.h"
 #include <glm/glm.hpp>
 #include <vector>
 
 struct Vertex {
-  glm::vec2 position;
+  glm::vec3 position; // Change to vec3 for 3D vertices
   glm::vec3 color;
 };
 

@@ -8,6 +8,7 @@
 #include "../managers/ComponentManager.h"
 #include "../systems/InputSystem.h"
 #include <algorithm>
+#include <iostream>
 
 const float MAX_ACCELERATION = 200.0f;
 
@@ -32,17 +33,17 @@ void MovementSystem::update(float deltaTime, EntityManager &entityManager,
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
     // Check if the entity has both Acceleration and Position components
-    if (mask.test(ComponentType<Acceleration>::ID()) && // Corrected ID() call
-        mask.test(ComponentType<Position>::ID())) {     // Corrected ID() call
+    if (mask.test(ComponentType<Acceleration>::ID()) &&
+        mask.test(ComponentType<Position>::ID())) {
       auto *acceleration = componentManager.getComponent<Acceleration>(entity);
       if (acceleration) {
-        // Update acceleration based on key input
+
         if (inputSystem->isKeyPressed(GLFW_KEY_UP)) {
           acceleration->ay += 150.0f * deltaTime;
         } else if (inputSystem->isKeyPressed(GLFW_KEY_DOWN)) {
           acceleration->ay -= 150.0f * deltaTime;
         } else {
-          acceleration->ay = 0.0f; // Reset if no input
+          acceleration->ay = 0.0f;
         }
 
         if (inputSystem->isKeyPressed(GLFW_KEY_LEFT)) {
@@ -50,17 +51,32 @@ void MovementSystem::update(float deltaTime, EntityManager &entityManager,
         } else if (inputSystem->isKeyPressed(GLFW_KEY_RIGHT)) {
           acceleration->ax += 150.0f * deltaTime;
         } else {
-          acceleration->ax = 0.0f; // Reset if no input
+          acceleration->ax = 0.0f;
         }
 
-        // Clamp acceleration values
+        // Update acceleration along the Z-axis
+        if (inputSystem->isKeyPressed(GLFW_KEY_W)) {
+          acceleration->az += 150.0f * deltaTime;
+        } else if (inputSystem->isKeyPressed(GLFW_KEY_S)) {
+          acceleration->az -= 150.0f * deltaTime;
+        } else {
+          acceleration->az = 0.0f;
+        }
+
+        // std::cout << "Entity: " << entity
+        //           << " | Acceleration X: " << acceleration->ax
+        //           << " | Acceleration Y: " << acceleration->ay
+        //           << " | Acceleration Z: " << acceleration->az << std::endl;
+
         acceleration->ax =
             std::clamp(acceleration->ax, -MAX_ACCELERATION, MAX_ACCELERATION);
         acceleration->ay =
             std::clamp(acceleration->ay, -MAX_ACCELERATION, MAX_ACCELERATION);
+        acceleration->az =
+            std::clamp(acceleration->az, -MAX_ACCELERATION, MAX_ACCELERATION);
       }
     }
   }
 }
 
-#endif // MOVEMENT_SYSTEM_H
+#endif

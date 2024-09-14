@@ -5,17 +5,22 @@
 #include "./systems/MovementSystem.h"
 #include "./systems/PhysicsSystem.h"
 #include "./systems/RenderSystem.h"
-#include "glad/glad.h" // Include GLAD before GLFW
+#include "glad/glad.h"
 #include <GLFW/glfw3.h>
 #include <iostream>
 #include <vector>
 
-const float TARGET_FPS = 60.0f;
+const float TARGET_FPS = 120.0f;
 const float TARGET_FRAME_TIME = 1.0f / TARGET_FPS;
 
 GLFWwindow *window;
 EntityManager entityManager;
 ComponentManager componentManager;
+
+// Callback function to adjust the viewport when the window is resized
+void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
+  glViewport(0, 0, width, height);
+}
 
 bool initOpenGL() {
   if (!glfwInit()) {
@@ -53,8 +58,8 @@ bool initOpenGL() {
   // Print OpenGL version (optional for debugging)
   std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
 
-  // Set the viewport to cover the whole window
-  glViewport(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT);
+  // Register callback for resizing the window
+  glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
   return true;
 }

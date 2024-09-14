@@ -1,4 +1,3 @@
-// shaders/fragment_shader.glsl
 #version 330 core
 
 in vec3 vertexColor;
