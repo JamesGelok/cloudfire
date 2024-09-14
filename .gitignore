@@ -1,0 +1,49 @@
+# Ignore object files and compiled executables
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dylib
+*.dll
+*.app
+
+# Ignore the dist folder (build artifacts)
+dist/
+
+# Ignore the main target executable
+main
+
+# Ignore backup and temporary files from editors
+*~
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+*.DS_Store
+
+# Ignore CMake files (if you eventually use CMake)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ignore Visual Studio files (if someone opens the project in VS)
+*.vcxproj
+*.vcxproj.user
+*.vcxproj.filters
+*.vs/
+*.sln
+
+# Ignore Mac OS specific files
+.DS_Store
+*.app
+
+# Ignore compile_commands.json (for clang tooling)
+compile_commands.json
+
+# Ignore IDE-specific files
+.idea/
+.vscode/
