@@ -1,14 +1,16 @@
 #version 330 core
 
-in vec3 vertexNormal;  // Normal passed from the vertex shader
-in vec3 fragPos;       // Fragment position for lighting calculations
+in vec3 vertexNormal;
+in vec3 fragPos;
 
 out vec4 FragColor;
 
-uniform vec3 lightDir;  // Light direction (assumed to be normalized)
+uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform float ambientStrength;
-uniform vec3 objectColor; // Uniform for object color
+uniform vec3 objectColor;  // Diffuse color from material
+uniform float specularStrength; // Specular strength from material
+uniform float shininess;        // Shininess from material
 
 void main() {
     // Ambient lighting
@@ -19,9 +21,13 @@ void main() {
     float diff = max(dot(norm, normalize(-lightDir)), 0.0);
     vec3 diffuse = diff * lightColor;
 
-    // Combine ambient and diffuse components
-    vec3 result = (ambient + diffuse) * objectColor;
+    // Specular lighting
+    vec3 viewDir = normalize(-fragPos);  // Assumes the camera is at (0,0,0)
+    vec3 reflectDir = reflect(normalize(lightDir), norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), shininess);
+    vec3 specular = specularStrength * spec * lightColor;
 
-    // Final color output
+    // Combine results
+    vec3 result = (ambient + diffuse + specular) * objectColor;
     FragColor = vec4(result, 1.0);
 }

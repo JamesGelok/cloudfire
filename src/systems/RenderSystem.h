@@ -3,9 +3,10 @@
 
 #include "../Shader.h"
 #include "../WindowConstants.h"
+#include "../components/Material.h" // Include the Material component
 #include "../components/Position.h"
 #include "../components/Renderable.h"
-#include "../components/Rotation.h" // Include rotation
+#include "../components/Rotation.h"
 #include "../core/Entity.h"
 #include "../managers/ComponentManager.h"
 #include "glad/glad.h"
@@ -69,15 +70,12 @@ RenderSystem::RenderSystem() {
 
   // Set up a basic view matrix (camera)
   std::cout << "[RenderSystem] Setting up view matrix..." << std::endl;
-  view =
-      glm::lookAt(glm::vec3(0.0f, 0.0f, 500.0f), // Camera position
-                  glm::vec3(0.0f, 0.0f, 0.0f),   // Look at the origin
-                  glm::vec3(0.0f, 1.0f, 0.0f));  // Up vector (positive Y axis)
+  view = glm::lookAt(glm::vec3(0.0f, 0.0f, 500.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+                     glm::vec3(0.0f, 1.0f, 0.0f));
 
   // Set up directional light properties
-  lightDirection =
-      glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f)); // Default light direction
-  lightColor = glm::vec3(1.0f, 1.0f, 1.0f);           // White light
+  lightDirection = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
+  lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 
   // Enable depth testing
   glEnable(GL_DEPTH_TEST);
@@ -134,7 +132,6 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
     if (mask.test(ComponentType<Position>::ID()) &&
         mask.test(ComponentType<Renderable2D>::ID()) &&
         mask.test(ComponentType<Rotation>::ID())) {
-
       auto *position = componentManager.getComponent<Position>(entity);
       auto *renderable = componentManager.getComponent<Renderable2D>(entity);
       auto *rotation = componentManager.getComponent<Rotation>(entity);
@@ -208,26 +205,23 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
   shader3D->setMat4("projection", glm::value_ptr(projection));
   shader3D->setMat4("view", glm::value_ptr(view));
 
-  // Set lighting uniforms
-  shader3D->setVec3("lightDir", -0.5f, -1.0f, -0.3f); // Light direction
-  shader3D->setVec3("lightColor", 1.0f, 1.0f, 1.0f);  // White light
-  shader3D->setFloat("ambientStrength", 0.5f);        // Ambient light
-  shader3D->setVec3("objectColor", 0.0f, 0.0f, 1.0f); // Blue object color
-
-  checkGLError("3D Shader use");
+  shader3D->setVec3("lightDir", lightDirection.x, lightDirection.y,
+                    lightDirection.z);
+  shader3D->setVec3("lightColor", lightColor.r, lightColor.g, lightColor.b);
+  shader3D->setFloat("ambientStrength", 0.5f); // Ambient light
 
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
     if (mask.test(ComponentType<Renderable3D>::ID()) &&
         mask.test(ComponentType<Position>::ID()) &&
-        mask.test(ComponentType<Rotation>::ID())) { // Check for rotation
-
+        mask.test(ComponentType<Material>::ID())) {
       auto *position = componentManager.getComponent<Position>(entity);
       auto *renderable = componentManager.getComponent<Renderable3D>(entity);
+      auto *material = componentManager.getComponent<Material>(entity);
       auto *rotation = componentManager.getComponent<Rotation>(entity);
 
-      if (position && renderable && rotation) {
+      if (position && renderable && material && rotation) {
         std::cout << "[RenderSystem] Found 3D object, entity ID: " << entity
                   << std::endl;
 
@@ -242,14 +236,11 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
           glBindVertexArray(VAO);
           glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
-          // Interleave vertices and normals
           std::vector<float> vertexData;
           for (size_t i = 0; i < renderable->vertices.size(); ++i) {
-            // Push vertex position
             vertexData.push_back(renderable->vertices[i].x);
             vertexData.push_back(renderable->vertices[i].y);
             vertexData.push_back(renderable->vertices[i].z);
-            // Push vertex normal
             vertexData.push_back(renderable->normals[i].x);
             vertexData.push_back(renderable->normals[i].y);
             vertexData.push_back(renderable->normals[i].z);
@@ -257,17 +248,14 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
 
           glBufferData(GL_ARRAY_BUFFER, vertexData.size() * sizeof(float),
                        vertexData.data(), GL_STATIC_DRAW);
-
           glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
           glBufferData(GL_ELEMENT_ARRAY_BUFFER,
                        renderable->indices.size() * sizeof(GLuint),
                        &renderable->indices[0], GL_STATIC_DRAW);
 
-          // Vertex position
           glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                                 (void *)0);
           glEnableVertexAttribArray(0);
-          // Normal
           glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
                                 (void *)(3 * sizeof(float)));
           glEnableVertexAttribArray(1);
@@ -281,9 +269,14 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(
             model, glm::vec3(position->x, position->y, position->z));
-        model = model * glm::mat4_cast(rotation->quaternion); // Apply rotation
+        model = model * glm::mat4_cast(rotation->quaternion);
 
         shader3D->setMat4("model", glm::value_ptr(model));
+
+        shader3D->setVec3("objectColor", material->diffuseColor.r,
+                          material->diffuseColor.g, material->diffuseColor.b);
+        shader3D->setFloat("specularStrength", material->specularStrength);
+        shader3D->setFloat("shininess", material->shininess);
 
         glBindVertexArray(VAOs3D[entity]);
         glDrawElements(GL_TRIANGLES, renderable->indices.size(),
