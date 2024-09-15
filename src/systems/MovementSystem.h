@@ -2,6 +2,7 @@
 #define MOVEMENT_SYSTEM_H
 
 #include "../components/Acceleration.h"
+#include "../components/PlayerControlled.h" // Include the PlayerControlled component
 #include "../components/Position.h"
 #include "../components/Velocity.h"
 #include "../core/Entity.h"
@@ -10,7 +11,9 @@
 #include <algorithm>
 #include <iostream>
 
-const float MAX_ACCELERATION = 200.0f;
+const float MAX_SPEED = 500.0f;
+const float ACCELERATION = 1500.0f;
+const float FRICTION = 8.0f;
 
 class MovementSystem {
 private:
@@ -32,48 +35,46 @@ void MovementSystem::update(float deltaTime, EntityManager &entityManager,
 
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
-    if (mask.test(ComponentType<Acceleration>::ID()) &&
-        mask.test(ComponentType<Position>::ID())) {
+    // Only apply movement if the entity has the PlayerControlled component
+    if (mask.test(ComponentType<Velocity>::ID()) &&
+        mask.test(ComponentType<Position>::ID()) &&
+        mask.test(ComponentType<PlayerControlled>::ID())) {
 
-      auto *acceleration = componentManager.getComponent<Acceleration>(entity);
-      if (acceleration) {
+      auto *velocity = componentManager.getComponent<Velocity>(entity);
+      if (velocity) {
 
+        // Adjust velocity directly based on input
         if (inputSystem->isKeyPressed(GLFW_KEY_UP)) {
-          acceleration->ay += 150.0f * deltaTime;
-        } else if (inputSystem->isKeyPressed(GLFW_KEY_DOWN)) {
-          acceleration->ay -= 150.0f * deltaTime;
-        } else {
-          acceleration->ay = 0.0f;
+          velocity->dy += ACCELERATION * deltaTime;
         }
-
+        if (inputSystem->isKeyPressed(GLFW_KEY_DOWN)) {
+          velocity->dy -= ACCELERATION * deltaTime;
+        }
         if (inputSystem->isKeyPressed(GLFW_KEY_LEFT)) {
-          acceleration->ax -= 150.0f * deltaTime;
-        } else if (inputSystem->isKeyPressed(GLFW_KEY_RIGHT)) {
-          acceleration->ax += 150.0f * deltaTime;
-        } else {
-          acceleration->ax = 0.0f;
+          velocity->dx -= ACCELERATION * deltaTime;
+        }
+        if (inputSystem->isKeyPressed(GLFW_KEY_RIGHT)) {
+          velocity->dx += ACCELERATION * deltaTime;
         }
 
-        // Update acceleration along the Z-axis
-        if (inputSystem->isKeyPressed(GLFW_KEY_W)) {
-          acceleration->az += 150.0f * deltaTime;
-        } else if (inputSystem->isKeyPressed(GLFW_KEY_S)) {
-          acceleration->az -= 150.0f * deltaTime;
-        } else {
-          acceleration->az = 0.0f;
+        // Apply friction when no input is pressed
+        if (!inputSystem->isKeyPressed(GLFW_KEY_UP) &&
+            !inputSystem->isKeyPressed(GLFW_KEY_DOWN)) {
+          velocity->dy *= (1.0f - FRICTION * deltaTime);
+        }
+        if (!inputSystem->isKeyPressed(GLFW_KEY_LEFT) &&
+            !inputSystem->isKeyPressed(GLFW_KEY_RIGHT)) {
+          velocity->dx *= (1.0f - FRICTION * deltaTime);
         }
 
-        std::cout << "Entity: " << entity
-                  << " | Acceleration X: " << acceleration->ax
-                  << " | Acceleration Y: " << acceleration->ay
-                  << " | Acceleration Z: " << acceleration->az << std::endl;
+        // Clamp velocity to max speed
+        velocity->dx = std::clamp(velocity->dx, -MAX_SPEED, MAX_SPEED);
+        velocity->dy = std::clamp(velocity->dy, -MAX_SPEED, MAX_SPEED);
 
-        acceleration->ax =
-            std::clamp(acceleration->ax, -MAX_ACCELERATION, MAX_ACCELERATION);
-        acceleration->ay =
-            std::clamp(acceleration->ay, -MAX_ACCELERATION, MAX_ACCELERATION);
-        acceleration->az =
-            std::clamp(acceleration->az, -MAX_ACCELERATION, MAX_ACCELERATION);
+        // Optional: Debugging output
+        std::cout << "Player Entity: " << entity
+                  << " | Velocity X: " << velocity->dx
+                  << " | Velocity Y: " << velocity->dy << std::endl;
       }
     }
   }

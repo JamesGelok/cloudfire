@@ -19,13 +19,14 @@ private:
 };
 
 InputSystem::InputSystem() {
-  // Initialize key states for movement in X, Y, and Z axes
   keyStates[GLFW_KEY_UP] = false;
   keyStates[GLFW_KEY_DOWN] = false;
   keyStates[GLFW_KEY_LEFT] = false;
   keyStates[GLFW_KEY_RIGHT] = false;
-  keyStates[GLFW_KEY_W] = false; // Forward (Z-axis)
-  keyStates[GLFW_KEY_S] = false; // Backward (Z-axis)
+  keyStates[GLFW_KEY_W] = false;
+  keyStates[GLFW_KEY_S] = false;
+  keyStates[GLFW_KEY_A] = false;
+  keyStates[GLFW_KEY_D] = false;
 }
 
 void InputSystem::update(GLFWwindow *window) {
@@ -35,20 +36,10 @@ void InputSystem::update(GLFWwindow *window) {
   keyStates[GLFW_KEY_LEFT] = (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
   keyStates[GLFW_KEY_RIGHT] =
       (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
-
-  // Update key states for Z-axis movement (forward/backward)
   keyStates[GLFW_KEY_W] = (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
   keyStates[GLFW_KEY_S] = (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
-
-  // Log the state of relevant keys
-  // std::cout << "Input States:\n";
-  // std::cout << "UP: " << keyStates[GLFW_KEY_UP]
-  //           << " | DOWN: " << keyStates[GLFW_KEY_DOWN] << "\n";
-  // std::cout << "LEFT: " << keyStates[GLFW_KEY_LEFT]
-  //           << " | RIGHT: " << keyStates[GLFW_KEY_RIGHT] << "\n";
-  // std::cout << "FORWARD (W): " << keyStates[GLFW_KEY_W]
-  //           << " | BACKWARD (S): " << keyStates[GLFW_KEY_S] << "\n";
-  // std::cout << "----------------------\n";
+  keyStates[GLFW_KEY_A] = (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS);
+  keyStates[GLFW_KEY_D] = (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS);
 }
 
 bool InputSystem::isKeyPressed(int key) const {
@@ -56,4 +47,4 @@ bool InputSystem::isKeyPressed(int key) const {
   return (it != keyStates.end()) ? it->second : false;
 }
 
-#endif // INPUT_SYSTEM_H
+#endif

@@ -84,14 +84,11 @@ RenderSystem::RenderSystem() {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  std::cout << "[RenderSystem] Blending and depth testing enabled."
-            << std::endl;
 
   checkGLError("Blending and depth test setup");
 }
 
 RenderSystem::~RenderSystem() {
-  std::cout << "[RenderSystem] Cleaning up shaders and buffers..." << std::endl;
   delete shader2D;
   delete shader3D;
   for (auto &pair : VAOs2D) {
@@ -106,20 +103,18 @@ RenderSystem::~RenderSystem() {
   for (auto &pair : VBOs3D) {
     glDeleteBuffers(1, &pair.second);
   }
-  std::cout << "[RenderSystem] Cleanup complete." << std::endl;
 
   checkGLError("Cleanup");
 }
 
 void RenderSystem::update(float deltaTime, EntityManager &entityManager,
                           ComponentManager &componentManager) {
-  std::cout << "[RenderSystem] Starting update..." << std::endl;
 
   // Clear depth buffer
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   // Render 2D objects
-  std::cout << "[RenderSystem] Rendering 2D objects..." << std::endl;
+
   shader2D->use();
   shader2D->setMat4("projection", glm::value_ptr(projection));
   shader2D->setMat4("view", glm::value_ptr(view));
@@ -137,11 +132,9 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
       auto *rotation = componentManager.getComponent<Rotation>(entity);
 
       if (position && renderable && rotation) {
-        std::cout << "[RenderSystem] Found 2D object, entity ID: " << entity
-                  << std::endl;
+
         if (VAOs2D.find(entity) == VAOs2D.end()) {
-          std::cout << "[RenderSystem] Initializing VAO for 2D entity: "
-                    << entity << std::endl;
+
           float halfWidth = renderable->width / 2.0f;
           float halfHeight = renderable->height / 2.0f;
 
@@ -199,8 +192,7 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
   }
 
   // Render 3D models
-  std::cout << "[RenderSystem] Rendering 3D objects with lighting..."
-            << std::endl;
+
   shader3D->use();
   shader3D->setMat4("projection", glm::value_ptr(projection));
   shader3D->setMat4("view", glm::value_ptr(view));
@@ -222,12 +214,7 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
       auto *rotation = componentManager.getComponent<Rotation>(entity);
 
       if (position && renderable && material && rotation) {
-        std::cout << "[RenderSystem] Found 3D object, entity ID: " << entity
-                  << std::endl;
-
         if (VAOs3D.find(entity) == VAOs3D.end()) {
-          std::cout << "[RenderSystem] Initializing VAO for 3D entity: "
-                    << entity << std::endl;
           GLuint VAO, VBO, EBO;
           glGenVertexArrays(1, &VAO);
           glGenBuffers(1, &VBO);
@@ -287,7 +274,6 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
       }
     }
   }
-  std::cout << "[RenderSystem] Update complete." << std::endl;
 }
 
 #endif
