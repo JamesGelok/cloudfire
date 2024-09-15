@@ -84,10 +84,28 @@ Shader::Shader(const char *vertexPath, const char *fragmentPath) {
 void Shader::use() { glUseProgram(ID); }
 
 void Shader::setMat4(const std::string &name, const GLfloat *value) {
-  glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE,
-                     value);
+  GLint location = glGetUniformLocation(ID, name.c_str());
+  if (location == -1) {
+    std::cerr << "ERROR::SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
+  } else {
+    glUniformMatrix4fv(location, 1, GL_FALSE, value);
+  }
 }
 
-void Shader::setColor(const std::string &name, float r, float g, float b) {
-  glUniform3f(glGetUniformLocation(ID, name.c_str()), r, g, b);
+void Shader::setVec3(const std::string &name, float r, float g, float b) {
+  GLint location = glGetUniformLocation(ID, name.c_str());
+  if (location == -1) {
+    std::cerr << "ERROR::SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
+  } else {
+    glUniform3f(location, r, g, b);
+  }
+}
+
+void Shader::setFloat(const std::string &name, float value) {
+  GLint location = glGetUniformLocation(ID, name.c_str());
+  if (location == -1) {
+    std::cerr << "ERROR::SHADER::UNIFORM_NOT_FOUND: " << name << std::endl;
+  } else {
+    glUniform1f(location, value);
+  }
 }

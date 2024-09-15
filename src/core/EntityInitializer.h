@@ -11,6 +11,7 @@
 #include "../managers/ComponentManager.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 void initializeEntities(EntityManager &entityManager,
                         ComponentManager &componentManager) {
@@ -33,13 +34,16 @@ void initializeEntities(EntityManager &entityManager,
   componentManager.addComponent(model, Acceleration(0.0f, 0.0f, 0.0f),
                                 entityManager);
 
-  // Load a 3D model using Assimp (ensure you have a valid model file path)
   Renderable3D renderable3D;
-  ModelLoader::loadModel("assets/models/cube.obj",
-                         renderable3D); // Specify the correct path
+  ModelLoader::loadModel("assets/models/cube.obj", renderable3D);
 
   componentManager.addComponent(model, renderable3D, entityManager);
-  componentManager.addComponent(model, Rotation(), entityManager);
+
+  // Apply an isometric rotation
+  glm::quat isometricRotation = glm::quat(glm::vec3(
+      glm::radians(45.0f), glm::radians(35.26f), glm::radians(35.26f)));
+  componentManager.addComponent(
+      model, Rotation(isometricRotation, glm::vec3(1, 1, 1)), entityManager);
 }
 
 #endif // ENTITY_INITIALIZER_H

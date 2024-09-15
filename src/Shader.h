@@ -1,4 +1,3 @@
-// src/Shader.h
 #ifndef SHADER_H
 #define SHADER_H
 
@@ -13,7 +12,8 @@ public:
 
   void use();
   void setMat4(const std::string &name, const GLfloat *value);
-  void setColor(const std::string &name, float r, float g, float b);
+  void setVec3(const std::string &name, float x, float y, float z);
+  void setFloat(const std::string &name, float value);
 };
 
-#endif // SHADER_H
+#endif
