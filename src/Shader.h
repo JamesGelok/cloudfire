@@ -13,8 +13,7 @@ public:
 
   void use();
   void setMat4(const std::string &name, const GLfloat *value);
-
-  // Additional utility functions as needed
+  void setColor(const std::string &name, float r, float g, float b);
 };
 
 #endif // SHADER_H

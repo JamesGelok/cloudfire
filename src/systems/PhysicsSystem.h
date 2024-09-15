@@ -27,7 +27,7 @@ void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
     if (mask.test(ComponentType<Position>::ID()) &&
         mask.test(ComponentType<Velocity>::ID()) &&
         mask.test(ComponentType<Acceleration>::ID()) &&
-        mask.test(ComponentType<Rotation>::ID())) { // Rotation added here
+        mask.test(ComponentType<Rotation>::ID())) {
 
       auto *position = componentManager.getComponent<Position>(entity);
       auto *velocity = componentManager.getComponent<Velocity>(entity);

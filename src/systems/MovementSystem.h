@@ -27,14 +27,14 @@ MovementSystem::MovementSystem(InputSystem *inputSys) : inputSystem(inputSys) {}
 
 void MovementSystem::update(float deltaTime, EntityManager &entityManager,
                             ComponentManager &componentManager) {
-  // Loop over all entities
+
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
 
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
-    // Check if the entity has both Acceleration and Position components
     if (mask.test(ComponentType<Acceleration>::ID()) &&
         mask.test(ComponentType<Position>::ID())) {
+
       auto *acceleration = componentManager.getComponent<Acceleration>(entity);
       if (acceleration) {
 
@@ -63,10 +63,10 @@ void MovementSystem::update(float deltaTime, EntityManager &entityManager,
           acceleration->az = 0.0f;
         }
 
-        // std::cout << "Entity: " << entity
-        //           << " | Acceleration X: " << acceleration->ax
-        //           << " | Acceleration Y: " << acceleration->ay
-        //           << " | Acceleration Z: " << acceleration->az << std::endl;
+        std::cout << "Entity: " << entity
+                  << " | Acceleration X: " << acceleration->ax
+                  << " | Acceleration Y: " << acceleration->ay
+                  << " | Acceleration Z: " << acceleration->az << std::endl;
 
         acceleration->ax =
             std::clamp(acceleration->ax, -MAX_ACCELERATION, MAX_ACCELERATION);
