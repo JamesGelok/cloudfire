@@ -3,6 +3,7 @@
 #define MOVEMENT_SYSTEM_H
 
 #include "../components/Acceleration.h"
+#include "../components/OnGround.h"
 #include "../components/PlayerControlled.h"
 #include "../components/Position.h"
 #include "../components/Rotation.h"
@@ -14,14 +15,13 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-const float MAX_SPEED = 500.0f;
+const float MAX_SPEED = 20.0f;
 const float ACCELERATION = 1500.0f;
-const float ROTATION_ACCELERATION =
-    glm::radians(180.0f); // Degrees per second squared
-const float MAX_ROTATION_SPEED = glm::radians(90.0f); // Degrees per second
+const float ROTATION_ACCELERATION = glm::radians(180.0f);
+const float MAX_ROTATION_SPEED = glm::radians(90.0f);
 const float FRICTION = 8.0f;
 const float ROTATIONAL_FRICTION = 8.0f;
-const float JUMP_FORCE = 600.0f; // Adjust as needed
+const float JUMP_FORCE = 30.0f;
 
 class MovementSystem {
 private:
@@ -107,8 +107,12 @@ void MovementSystem::update(float deltaTime, EntityManager &entityManager,
         // Handle jump input
         if (inputSystem->isKeyPressed(GLFW_KEY_SPACE)) {
           // Check if the player is on the ground before allowing to jump
-          if (velocity->dy == 0.0f) {
+          if (mask.test(ComponentType<OnGround>::ID())) {
             velocity->dy += JUMP_FORCE;
+            // Remove the OnGround component to prevent double jumps
+            componentManager.removeComponent<OnGround>(entity);
+            entityManager.getComponentMask(entity).reset(
+                ComponentType<OnGround>::ID());
           }
         }
       }

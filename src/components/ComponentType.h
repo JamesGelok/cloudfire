@@ -1,4 +1,3 @@
-// src/components/ComponentType.h
 #ifndef COMPONENT_TYPE_H
 #define COMPONENT_TYPE_H
 
@@ -18,4 +17,4 @@ template <typename T> struct ComponentType : public BaseComponentType {
   }
 };
 
-#endif // COMPONENT_TYPE_H
+#endif

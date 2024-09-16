@@ -37,6 +37,8 @@ void InputSystem::update(GLFWwindow *window) {
   keyStates[GLFW_KEY_LEFT] = (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
   keyStates[GLFW_KEY_RIGHT] =
       (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
+  keyStates[GLFW_KEY_SPACE] =
+      (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS);
   keyStates[GLFW_KEY_W] = (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS);
   keyStates[GLFW_KEY_S] = (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS);
   keyStates[GLFW_KEY_A] = (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS);

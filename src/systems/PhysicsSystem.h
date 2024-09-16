@@ -1,10 +1,10 @@
-// src/systems/PhysicsSystem.h
 #ifndef PHYSICS_SYSTEM_H
 #define PHYSICS_SYSTEM_H
 
 #include "../components/Acceleration.h"
 #include "../components/Collidable.h"
 #include "../components/GravityAffected.h"
+#include "../components/OnGround.h"
 #include "../components/PlayerControlled.h"
 #include "../components/Position.h"
 #include "../components/Rotation.h"
@@ -12,7 +12,7 @@
 #include "../components/Velocity.h"
 #include "../core/Entity.h"
 #include "../managers/ComponentManager.h"
-#include <algorithm> // For std::clamp
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtx/quaternion.hpp>
 
@@ -26,7 +26,6 @@ public:
 
 void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
                            ComponentManager &componentManager) {
-  // First, apply physics updates
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
@@ -81,7 +80,7 @@ void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
     }
   }
 
-  // Then, handle collisions
+  // Then, handle collisions and grounded state
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
     const ComponentMask &mask = entityManager.getComponentMask(entity);
 
@@ -92,10 +91,12 @@ void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
       auto *position = componentManager.getComponent<Position>(entity);
       auto *velocity = componentManager.getComponent<Velocity>(entity);
 
-      // Only check collisions for the player
-      if (mask.test(ComponentType<PlayerControlled>::ID())) {
+      // Only check collisions for entities affected by gravity
+      if (mask.test(ComponentType<GravityAffected>::ID())) {
 
-        // Check collision with ground
+        bool isGrounded = false; // Flag to track if the entity is grounded
+
+        // Check collision with other collidable entities
         for (EntityID otherEntity = 0;
              otherEntity < entityManager.entityCount(); ++otherEntity) {
           if (otherEntity == entity)
@@ -156,20 +157,35 @@ void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
                            otherPosition->y + otherHalfSizeY -
                                (position->y - entityHalfSizeY));
 
-              // Correct the player's position to resolve collision
+              // Correct the entity's position to resolve collision
               if (penetrationY > 0.0f) {
                 if (velocity->dy < 0.0f) {
-                  // Landing on top of the ground
+                  // Landing on top of the other entity
                   position->y += penetrationY;
+                  velocity->dy = 0.0f;
+                  isGrounded = true; // Entity is grounded
                 } else if (velocity->dy > 0.0f) {
                   // Hitting the underside of an object
                   position->y -= penetrationY;
+                  velocity->dy = 0.0f;
                 }
-
-                // Zero out vertical velocity
-                velocity->dy = 0.0f;
               }
             }
+          }
+        }
+
+        // Update the OnGround component based on the isGrounded flag
+        if (isGrounded) {
+          // Add the OnGround component if not already present
+          if (!mask.test(ComponentType<OnGround>::ID())) {
+            componentManager.addComponent(entity, OnGround(), entityManager);
+          }
+        } else {
+          // Remove the OnGround component if present
+          if (mask.test(ComponentType<OnGround>::ID())) {
+            componentManager.removeComponent<OnGround>(entity);
+            entityManager.getComponentMask(entity).reset(
+                ComponentType<OnGround>::ID());
           }
         }
       }
@@ -177,4 +193,4 @@ void PhysicsSystem::update(float deltaTime, EntityManager &entityManager,
   }
 }
 
-#endif // PHYSICS_SYSTEM_H
+#endif
