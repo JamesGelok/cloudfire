@@ -105,8 +105,8 @@ void initializePlayer(EntityManager &entityManager,
   ModelLoader::loadModel("assets/models/cube.obj", renderable3D);
   componentManager.addComponent(player, renderable3D, entityManager);
 
-  // Set the material color for the player cube (red)
-  Material playerMaterial(glm::vec3(1.0f, 0.0f, 0.0f), 0.5f, 32.0f);
+  // Set the material color for the player cube (orange)
+  Material playerMaterial(glm::vec3(1.0f, 0.5f, 0.0f), 0.5f, 32.0f);
   componentManager.addComponent(player, playerMaterial, entityManager);
 
   // Add player-controlled tag
