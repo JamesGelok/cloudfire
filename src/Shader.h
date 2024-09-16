@@ -1,5 +1,4 @@
-#ifndef SHADER_H
-#define SHADER_H
+#pragma once
 
 #include "glad/glad.h"
 #include <string>
@@ -15,5 +14,3 @@ public:
   void setVec3(const std::string &name, float x, float y, float z);
   void setFloat(const std::string &name, float value);
 };
-
-#endif

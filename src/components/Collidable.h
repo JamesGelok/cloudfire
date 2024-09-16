@@ -1,8 +1,5 @@
-#ifndef COLLIDABLE_H
-#define COLLIDABLE_H
+#pragma once
 
 struct Collidable {
-  Collidable() = default;
+  Collidable();
 };
-
-#endif

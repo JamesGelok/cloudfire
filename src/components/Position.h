@@ -1,13 +1,9 @@
-#ifndef POSITION_H
-#define POSITION_H
+#pragma once
 
 struct Position {
   float x;
   float y;
-  float z; // New field for Z position
+  float z;
 
-  Position(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f)
-      : x(_x), y(_y), z(_z) {}
+  Position(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f);
 };
-
-#endif // POSITION_H

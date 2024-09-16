@@ -1,13 +1,9 @@
-#ifndef VELOCITY_H
-#define VELOCITY_H
+#pragma once
 
 struct Velocity {
   float dx;
   float dy;
-  float dz; // New field for Z velocity
+  float dz;
 
-  Velocity(float _dx = 0.0f, float _dy = 0.0f, float _dz = 0.0f)
-      : dx(_dx), dy(_dy), dz(_dz) {}
+  Velocity(float _dx = 0.0f, float _dy = 0.0f, float _dz = 0.0f);
 };
-
-#endif // VELOCITY_H

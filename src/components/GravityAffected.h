@@ -1,8 +1,5 @@
-#ifndef GRAVITY_AFFECTED_H
-#define GRAVITY_AFFECTED_H
+#pragma once
 
 struct GravityAffected {
-  GravityAffected() = default;
+  GravityAffected();
 };
-
-#endif

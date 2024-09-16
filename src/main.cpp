@@ -1,6 +1,6 @@
-#include "./GameManager.h"
 #include "./WindowConstants.h"
 #include "./core/Entity.h"
+#include "./managers/GameManager.h"
 #include "./systems/InputSystem.h"
 #include "./systems/MovementSystem.h"
 #include "./systems/PhysicsSystem.h"
@@ -41,8 +41,8 @@ bool initOpenGL() {
   // Enable double buffering explicitly
   glfwWindowHint(GLFW_DOUBLEBUFFER, GL_TRUE); // Ensure double buffering
 
-  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "ECS Physics Box",
-                            nullptr, nullptr);
+  window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "CloudFire", nullptr,
+                            nullptr);
   if (!window) {
     std::cerr << "Failed to create GLFW window" << std::endl;
     glfwTerminate();
@@ -67,7 +67,7 @@ bool initOpenGL() {
 }
 
 void cleanup() {
-  delete gameManager; // Clean up the game manager
+  delete gameManager;
   glfwDestroyWindow(window);
   glfwTerminate();
 }
@@ -87,7 +87,7 @@ int main() {
   InputSystem inputSystem;
   MovementSystem movementSystem(&inputSystem);
   PhysicsSystem physicsSystem;
-  RenderSystem renderSystem(window); // Pass window pointer directly
+  RenderSystem renderSystem(window);
 
   float lastTime = glfwGetTime();
   float accumulator = 0.0f;
@@ -121,26 +121,26 @@ int main() {
       }
     }
 
-    if (playerPosition && playerPosition->y < RESET_THRESHOLD) {
-      // Reset the game
-      gameManager->resetGame();
-      std::cout << "Player fell below threshold. Game reset." << std::endl;
-      // Reset systems if necessary
-      inputSystem = InputSystem();
-      movementSystem = MovementSystem(&inputSystem);
-      physicsSystem = PhysicsSystem();
-      renderSystem.reset(); // Use reset method instead of reassigning
-      // Reset timing variables
-      lastTime = glfwGetTime();
-      accumulator = 0.0f;
-      continue; // Skip rendering this frame
-    }
-
     // Render the scene
     renderSystem.update(deltaTime, entityManager, componentManager);
 
     // Swap the buffers (show the rendered frame)
     glfwSwapBuffers(window);
+
+    if (playerPosition && playerPosition->y < RESET_THRESHOLD) {
+      gameManager->resetGame();
+      std::cout << "Player fell below threshold. Game reset." << std::endl;
+      inputSystem = InputSystem();
+      movementSystem = MovementSystem(&inputSystem);
+      physicsSystem = PhysicsSystem();
+      // render system needs to call reset method because it has OpenGL
+      // resources that need to be cleaned up. In hindsight, I could've used
+      // operator overloading to make this more readable
+      renderSystem.reset();
+      // Reset timing variables
+      lastTime = glfwGetTime();
+      accumulator = 0.0f;
+    }
   }
 
   cleanup();

@@ -1,5 +1,4 @@
-#ifndef COMPONENT_MANAGER_H
-#define COMPONENT_MANAGER_H
+#pragma once
 
 #include "../components/Acceleration.h"
 #include "../components/ComponentType.h"
@@ -11,7 +10,6 @@
 #include <typeindex>
 #include <unordered_map>
 
-// Forward declare EntityID and EntityManager
 using EntityID = size_t;
 
 template <typename T> class ComponentPool {
@@ -37,7 +35,6 @@ private:
   template <typename T> ComponentPool<T> &getComponentPool();
 };
 
-// Implementation of ComponentPool methods
 template <typename T>
 T &ComponentPool<T>::addComponent(EntityID entity, T component) {
   components[entity] = component;
@@ -53,7 +50,6 @@ template <typename T> T *ComponentPool<T>::getComponent(EntityID entity) {
   return (it != components.end()) ? &it->second : nullptr;
 }
 
-// Implementation of ComponentManager methods
 template <typename T>
 T &ComponentManager::addComponent(EntityID entity, T component,
                                   EntityManager &entityManager) {
@@ -80,5 +76,3 @@ template <typename T> ComponentPool<T> &ComponentManager::getComponentPool() {
   }
   return *static_cast<ComponentPool<T> *>(componentPools[typeIndex].get());
 }
-
-#endif // COMPONENT_MANAGER_H

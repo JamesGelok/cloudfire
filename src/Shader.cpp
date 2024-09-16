@@ -1,4 +1,3 @@
-// src/Shader.cpp
 #include "Shader.h"
 #include <fstream>
 #include <iostream>

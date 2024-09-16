@@ -1,12 +1,12 @@
-#ifndef SYSTEM_H
-#define SYSTEM_H
+#pragma once
 
-#include "Entity.h"
+#include "../core/Entity.h"
+#include <ComponentManager.h>
 #include <vector>
 
 class System {
 public:
-  virtual void update(float deltaTime, std::vector<Entity> &entities) = 0;
+  virtual void update(float deltaTime, EntityManager &entityManager,
+                      ComponentManager &componentManager) = 0;
+  virtual ~System() = default;
 };
-
-#endif // SYSTEM_H

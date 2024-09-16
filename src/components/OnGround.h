@@ -1,8 +1,5 @@
-#ifndef ON_GROUND_H
-#define ON_GROUND_H
+#pragma once
 
 struct OnGround {
-  OnGround() = default;
+  OnGround();
 };
-
-#endif
