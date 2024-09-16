@@ -26,18 +26,47 @@ public:
   void update(float deltaTime, EntityManager &entityManager,
               ComponentManager &componentManager);
 
+  void reset();
+
 private:
-  GLFWwindow *window; // Store the window pointer
+  GLFWwindow *window;
   Shader *shader3D;
   glm::mat4 projection;
   glm::vec3 lightDirection;
   glm::vec3 lightColor;
   std::unordered_map<EntityID, GLuint> VAOs3D;
   std::unordered_map<EntityID, GLuint> VBOs3D;
+
+  void initialize();
 };
 
-RenderSystem::RenderSystem(GLFWwindow *win) : window(win) {
-  // Initialize shader for 3D rendering
+RenderSystem::RenderSystem(GLFWwindow *win) : window(win) { initialize(); }
+
+RenderSystem::~RenderSystem() {
+  delete shader3D;
+  for (auto &pair : VAOs3D) {
+    glDeleteVertexArrays(1, &pair.second);
+  }
+  for (auto &pair : VBOs3D) {
+    glDeleteBuffers(1, &pair.second);
+  }
+}
+
+void RenderSystem::reset() {
+  delete shader3D;
+  for (auto &pair : VAOs3D) {
+    glDeleteVertexArrays(1, &pair.second);
+  }
+  for (auto &pair : VBOs3D) {
+    glDeleteBuffers(1, &pair.second);
+  }
+  VAOs3D.clear();
+  VBOs3D.clear();
+
+  initialize();
+}
+
+void RenderSystem::initialize() {
   shader3D = new Shader("shaders/vertex_shader_3D.glsl",
                         "shaders/fragment_shader_3D.glsl");
 
@@ -61,16 +90,6 @@ RenderSystem::RenderSystem(GLFWwindow *win) : window(win) {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-}
-
-RenderSystem::~RenderSystem() {
-  delete shader3D;
-  for (auto &pair : VAOs3D) {
-    glDeleteVertexArrays(1, &pair.second);
-  }
-  for (auto &pair : VBOs3D) {
-    glDeleteBuffers(1, &pair.second);
-  }
 }
 
 void RenderSystem::update(float deltaTime, EntityManager &entityManager,

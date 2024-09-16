@@ -1,7 +1,6 @@
-// src/main.cpp
+#include "./GameManager.h"
 #include "./WindowConstants.h"
 #include "./core/Entity.h"
-#include "./core/EntityInitializer.h"
 #include "./systems/InputSystem.h"
 #include "./systems/MovementSystem.h"
 #include "./systems/PhysicsSystem.h"
@@ -13,10 +12,12 @@
 
 const float TARGET_FPS = 120.0f;
 const float TARGET_FRAME_TIME = 1.0f / TARGET_FPS;
+const float RESET_THRESHOLD = -50.0f;
 
 GLFWwindow *window;
 EntityManager entityManager;
 ComponentManager componentManager;
+GameManager *gameManager;
 
 // Callback function to adjust the viewport when the window is resized
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -66,6 +67,7 @@ bool initOpenGL() {
 }
 
 void cleanup() {
+  delete gameManager; // Clean up the game manager
   glfwDestroyWindow(window);
   glfwTerminate();
 }
@@ -78,8 +80,8 @@ int main() {
   // Enable VSync (set to 1 for enabling VSync)
   glfwSwapInterval(1);
 
-  // Initialize entities
-  initializeEntities(entityManager, componentManager);
+  // Initialize game manager
+  gameManager = new GameManager(entityManager, componentManager);
 
   // Initialize systems
   InputSystem inputSystem;
@@ -105,6 +107,33 @@ int main() {
       movementSystem.update(TARGET_FRAME_TIME, entityManager, componentManager);
       physicsSystem.update(TARGET_FRAME_TIME, entityManager, componentManager);
       accumulator -= TARGET_FRAME_TIME;
+    }
+
+    // Check if the player has fallen below the reset threshold
+    // Find the player entity
+    Position *playerPosition = nullptr;
+    for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
+      const ComponentMask &mask = entityManager.getComponentMask(entity);
+      if (mask.test(ComponentType<PlayerControlled>::ID()) &&
+          mask.test(ComponentType<Position>::ID())) {
+        playerPosition = componentManager.getComponent<Position>(entity);
+        break;
+      }
+    }
+
+    if (playerPosition && playerPosition->y < RESET_THRESHOLD) {
+      // Reset the game
+      gameManager->resetGame();
+      std::cout << "Player fell below threshold. Game reset." << std::endl;
+      // Reset systems if necessary
+      inputSystem = InputSystem();
+      movementSystem = MovementSystem(&inputSystem);
+      physicsSystem = PhysicsSystem();
+      renderSystem.reset(); // Use reset method instead of reassigning
+      // Reset timing variables
+      lastTime = glfwGetTime();
+      accumulator = 0.0f;
+      continue; // Skip rendering this frame
     }
 
     // Render the scene
