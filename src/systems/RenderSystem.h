@@ -90,6 +90,8 @@ void RenderSystem::initialize() {
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glClearColor(0.53f, 0.81f, 0.98f, 1.0f);
 }
 
 void RenderSystem::update(float deltaTime, EntityManager &entityManager,

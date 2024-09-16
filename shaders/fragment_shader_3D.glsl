@@ -8,9 +8,9 @@ out vec4 FragColor;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform float ambientStrength;
-uniform vec3 objectColor;  // Diffuse color from material
-uniform float specularStrength; // Specular strength from material
-uniform float shininess;        // Shininess from material
+uniform vec3 objectColor;
+uniform float specularStrength;
+uniform float shininess;
 
 void main() {
     // Ambient lighting

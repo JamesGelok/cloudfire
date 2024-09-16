@@ -1,4 +1,3 @@
-// src/core/EntityInitializer.h
 #ifndef ENTITY_INITIALIZER_H
 #define ENTITY_INITIALIZER_H
 
@@ -15,15 +14,84 @@
 #include "../components/Velocity.h"
 #include "../core/Entity.h"
 #include "../managers/ComponentManager.h"
+#include <cmath>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
+#include <random>
 
+const float MIN_PLATFORM_DISTANCE = 10.0f;
+const float MAX_PLATFORM_DISTANCE = 20.0f;
+const float PLATFORM_STEP_HEIGHT = 0.5f;
+const int PLATFORM_COUNT = 10;
+
+float randomFloat(float min, float max) {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(min, max);
+  return dis(gen);
+}
+
+glm::vec3 getNextPlatformPosition(const glm::vec3 &lastPos,
+                                  const glm::vec3 &lastDir) {
+  float angle = randomFloat(-glm::radians(45.0f), glm::radians(45.0f));
+
+  // Create a rotation matrix to rotate the direction vector
+  glm::mat4 rotationMatrix =
+      glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  // Rotate the last direction vector to get the new direction
+  glm::vec3 newDir = glm::vec3(rotationMatrix * glm::vec4(lastDir, 0.0f));
+
+  // Calculate a random distance within the allowed range
+  float distance = randomFloat(MIN_PLATFORM_DISTANCE, MAX_PLATFORM_DISTANCE);
+
+  // Calculate the new position based on the rotated direction and distance
+  glm::vec3 newPos = lastPos + (newDir * distance);
+
+  // Add the step height to move the platform upward
+  newPos.y += PLATFORM_STEP_HEIGHT;
+
+  return newPos;
+}
+
+// Helper function to initialize a platform
+void initializePlatform(EntityManager &entityManager,
+                        ComponentManager &componentManager, float x, float y,
+                        float z, float scaleX = 5.0f, float scaleY = 1.0f,
+                        float scaleZ = 5.0f) {
+  EntityID platform = entityManager.createEntity();
+
+  componentManager.addComponent(platform, Position(x, y, z), entityManager);
+  componentManager.addComponent(platform, Velocity(0.0f, 0.0f, 0.0f),
+                                entityManager);
+  componentManager.addComponent(platform, Acceleration(0.0f, 0.0f, 0.0f),
+                                entityManager);
+
+  // Load the 3D cube model for the platform
+  Renderable3D renderable3D;
+  ModelLoader::loadModel("assets/models/cube.obj", renderable3D);
+  componentManager.addComponent(platform, renderable3D, entityManager);
+
+  // Set the material color for the platform (grey)
+  Material platformMaterial(glm::vec3(0.8f, 0.8f, 0.8f), 0.5f, 32.0f);
+  componentManager.addComponent(platform, platformMaterial, entityManager);
+
+  // Add collidable tag for the platform
+  componentManager.addComponent(platform, Collidable(), entityManager);
+
+  // Add scale component to set the platform size
+  componentManager.addComponent(platform, Scale(scaleX, scaleY, scaleZ),
+                                entityManager);
+}
+
+// Function to initialize the player
 void initializePlayer(EntityManager &entityManager,
                       ComponentManager &componentManager) {
   EntityID player = entityManager.createEntity();
 
-  componentManager.addComponent(player, Position(0.0f, 1.0f, 0.0f),
-                                entityManager); // Start above the ground
+  componentManager.addComponent(
+      player, Position(0.0f, 2.0f, 0.0f),
+      entityManager); // Start above the first platform
   componentManager.addComponent(player, Velocity(0.0f, 0.0f, 0.0f),
                                 entityManager);
   componentManager.addComponent(player, Acceleration(0.0f, 0.0f, 0.0f),
@@ -54,43 +122,31 @@ void initializePlayer(EntityManager &entityManager,
   componentManager.addComponent(player, Scale(1.0f, 1.0f, 1.0f), entityManager);
 }
 
-// Helper function to initialize ground/platform entity
-void initializeGround(EntityManager &entityManager,
-                      ComponentManager &componentManager) {
-  EntityID ground = entityManager.createEntity();
-
-  componentManager.addComponent(ground, Position(0.0f, 0.0f, 0.0f),
-                                entityManager); // Ground at y = 0
-  componentManager.addComponent(ground, Velocity(0.0f, 0.0f, 0.0f),
-                                entityManager);
-  componentManager.addComponent(ground, Acceleration(0.0f, 0.0f, 0.0f),
-                                entityManager);
-
-  // Load the 3D cube model for the ground
-  Renderable3D renderable3D;
-  ModelLoader::loadModel("assets/models/cube.obj", renderable3D);
-  componentManager.addComponent(ground, renderable3D, entityManager);
-
-  // Set the material color for the ground (grey)
-  Material groundMaterial(glm::vec3(0.5f, 0.5f, 0.5f), 0.5f, 32.0f);
-  componentManager.addComponent(ground, groundMaterial, entityManager);
-
-  // Add collidable tag for ground
-  componentManager.addComponent(ground, Collidable(), entityManager);
-
-  // Add scale component to make the ground larger
-  componentManager.addComponent(ground, Scale(50.0f, 1.0f, 50.0f),
-                                entityManager);
-}
-
 // Main function to initialize all entities
 void initializeEntities(EntityManager &entityManager,
                         ComponentManager &componentManager) {
   // Initialize the player-controlled red cube
   initializePlayer(entityManager, componentManager);
 
-  // Initialize ground
-  initializeGround(entityManager, componentManager);
+  // Initialize the starting platform
+  glm::vec3 lastPlatformPos(0.0f, 0.0f, 0.0f); // Starting at the origin
+  glm::vec3 lastDirection(1.0f, 0.0f,
+                          0.0f); // Initial direction along the X-axis
+
+  initializePlatform(entityManager, componentManager, lastPlatformPos.x,
+                     lastPlatformPos.y, lastPlatformPos.z, 10.0f, 1.0f, 10.0f);
+
+  // Generate and initialize a path of platforms
+  for (int i = 1; i <= PLATFORM_COUNT; ++i) {
+    glm::vec3 nextPlatformPos =
+        getNextPlatformPosition(lastPlatformPos, lastDirection);
+    initializePlatform(entityManager, componentManager, nextPlatformPos.x,
+                       nextPlatformPos.y, nextPlatformPos.z);
+
+    // Update the last platform position and direction for the next iteration
+    lastDirection = glm::normalize(nextPlatformPos - lastPlatformPos);
+    lastPlatformPos = nextPlatformPos;
+  }
 }
 
-#endif // ENTITY_INITIALIZER_H
+#endif
