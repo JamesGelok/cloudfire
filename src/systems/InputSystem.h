@@ -23,6 +23,7 @@ InputSystem::InputSystem() {
   keyStates[GLFW_KEY_DOWN] = false;
   keyStates[GLFW_KEY_LEFT] = false;
   keyStates[GLFW_KEY_RIGHT] = false;
+  keyStates[GLFW_KEY_SPACE] = false;
   keyStates[GLFW_KEY_W] = false;
   keyStates[GLFW_KEY_S] = false;
   keyStates[GLFW_KEY_A] = false;

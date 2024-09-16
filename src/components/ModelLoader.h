@@ -1,11 +1,14 @@
-// src/ModelLoader.h
+// src/components/ModelLoader.h
 #ifndef MODEL_LOADER_H
 #define MODEL_LOADER_H
 
 #include "Renderable.h"
+#include <algorithm> // For std::max
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
+#include <float.h> // For FLT_MAX
+#include <glm/glm.hpp>
 #include <iostream>
 
 class ModelLoader {
@@ -38,6 +41,10 @@ private:
     renderable.normals.clear();
     renderable.indices.clear();
 
+    // Variables to find the center of the model
+    glm::vec3 minVertex(FLT_MAX);
+    glm::vec3 maxVertex(-FLT_MAX);
+
     // Process vertices
     for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
       glm::vec3 vertex;
@@ -46,11 +53,31 @@ private:
       vertex.z = mesh->mVertices[i].z;
       renderable.vertices.push_back(vertex);
 
+      // Update min and max vertices
+      minVertex = glm::min(minVertex, vertex);
+      maxVertex = glm::max(maxVertex, vertex);
+
       glm::vec3 normal;
       normal.x = mesh->mNormals[i].x;
       normal.y = mesh->mNormals[i].y;
       normal.z = mesh->mNormals[i].z;
       renderable.normals.push_back(normal);
+    }
+
+    // Calculate the center and size of the model
+    glm::vec3 center = (minVertex + maxVertex) * 0.5f;
+    glm::vec3 size = maxVertex - minVertex;
+
+    // Compute the maximum component of size
+    float maxComponent = std::max(size.x, std::max(size.y, size.z));
+    if (maxComponent == 0.0f) {
+      maxComponent = 1.0f; // Prevent division by zero
+    }
+    float scaleFactor = 1.0f / maxComponent; // Normalize to unit size
+
+    // Adjust vertices to center and normalize the model
+    for (auto &vertex : renderable.vertices) {
+      vertex = (vertex - center) * scaleFactor;
     }
 
     // Process indices
@@ -62,7 +89,7 @@ private:
     }
 
     // Log the results
-    std::cout << "Model loaded successfully!" << std::endl;
+    std::cout << "Model loaded and normalized successfully!" << std::endl;
     std::cout << "Vertices loaded: " << renderable.vertices.size() << std::endl;
     std::cout << "Indices loaded: " << renderable.indices.size() << std::endl;
   }

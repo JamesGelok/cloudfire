@@ -1,3 +1,4 @@
+// src/main.cpp
 #include "./WindowConstants.h"
 #include "./core/Entity.h"
 #include "./core/EntityInitializer.h"
@@ -84,7 +85,7 @@ int main() {
   InputSystem inputSystem;
   MovementSystem movementSystem(&inputSystem);
   PhysicsSystem physicsSystem;
-  RenderSystem renderSystem;
+  RenderSystem renderSystem(window); // Pass window pointer directly
 
   float lastTime = glfwGetTime();
   float accumulator = 0.0f;
@@ -99,9 +100,6 @@ int main() {
     glfwPollEvents();
     inputSystem.update(window);
 
-    // Clear the screen before drawing (ensure back buffer is cleared)
-    glClear(GL_COLOR_BUFFER_BIT);
-
     // Game logic update
     while (accumulator >= TARGET_FRAME_TIME) {
       movementSystem.update(TARGET_FRAME_TIME, entityManager, componentManager);
@@ -113,7 +111,7 @@ int main() {
     renderSystem.update(deltaTime, entityManager, componentManager);
 
     // Swap the buffers (show the rendered frame)
-    glfwSwapBuffers(window); // This swaps the front and back buffers
+    glfwSwapBuffers(window);
   }
 
   cleanup();

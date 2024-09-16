@@ -1,12 +1,15 @@
+// src/systems/RenderSystem.h
 #ifndef RENDER_SYSTEM_H
 #define RENDER_SYSTEM_H
 
 #include "../Shader.h"
 #include "../WindowConstants.h"
-#include "../components/Material.h" // Include the Material component
+#include "../components/Material.h"
+#include "../components/PlayerControlled.h"
 #include "../components/Position.h"
 #include "../components/Renderable.h"
 #include "../components/Rotation.h"
+#include "../components/Scale.h"
 #include "../core/Entity.h"
 #include "../managers/ComponentManager.h"
 #include "glad/glad.h"
@@ -14,64 +17,39 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <iostream>
-#include <unordered_map>
-
-// Function to check for OpenGL errors
-void checkGLError(const std::string &message) {
-  GLenum err;
-  while ((err = glGetError()) != GL_NO_ERROR) {
-    std::cerr << "[OpenGL ERROR] " << message << " - Error Code: " << err
-              << std::endl;
-  }
-}
 
 class RenderSystem {
 public:
-  RenderSystem();
+  RenderSystem(GLFWwindow *window);
   ~RenderSystem();
 
   void update(float deltaTime, EntityManager &entityManager,
               ComponentManager &componentManager);
 
 private:
-  Shader *shader2D;
+  GLFWwindow *window; // Store the window pointer
   Shader *shader3D;
   glm::mat4 projection;
-  glm::mat4 view;           // View matrix for the camera
-  glm::vec3 lightDirection; // Directional light direction
-  glm::vec3 lightColor;     // Directional light color
-  std::unordered_map<EntityID, GLuint> VAOs2D;
-  std::unordered_map<EntityID, GLuint> VBOs2D;
+  glm::vec3 lightDirection;
+  glm::vec3 lightColor;
   std::unordered_map<EntityID, GLuint> VAOs3D;
   std::unordered_map<EntityID, GLuint> VBOs3D;
 };
 
-RenderSystem::RenderSystem() {
-  // Initialize shaders for 2D and 3D rendering
-  std::cout << "[RenderSystem] Initializing shaders..." << std::endl;
-  shader2D = new Shader("shaders/vertex_shader_2D.glsl",
-                        "shaders/fragment_shader_2D.glsl");
+RenderSystem::RenderSystem(GLFWwindow *win) : window(win) {
+  // Initialize shader for 3D rendering
   shader3D = new Shader("shaders/vertex_shader_3D.glsl",
                         "shaders/fragment_shader_3D.glsl");
 
-  checkGLError("Shader initialization");
-
   // Set up the projection matrix (perspective projection for 3D objects)
-  std::cout << "[RenderSystem] Setting up projection matrix..." << std::endl;
   float fov = glm::radians(45.0f);
-  float aspectRatio = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+  int width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+  float aspectRatio = (float)width / (float)height;
   float nearPlane = 0.1f;
   float farPlane = 10000.0f;
 
   projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
-
-  checkGLError("Projection matrix setup");
-
-  // Set up a basic view matrix (camera)
-  std::cout << "[RenderSystem] Setting up view matrix..." << std::endl;
-  view = glm::lookAt(glm::vec3(0.0f, 0.0f, 500.0f), glm::vec3(0.0f, 0.0f, 0.0f),
-                     glm::vec3(0.0f, 1.0f, 0.0f));
 
   // Set up directional light properties
   lightDirection = glm::normalize(glm::vec3(-0.5f, -1.0f, -0.3f));
@@ -79,120 +57,84 @@ RenderSystem::RenderSystem() {
 
   // Enable depth testing
   glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS); // Accept fragment if it is closer to the camera than
-                        // the former one
+  glDepthFunc(GL_LESS);
 
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  checkGLError("Blending and depth test setup");
 }
 
 RenderSystem::~RenderSystem() {
-  delete shader2D;
   delete shader3D;
-  for (auto &pair : VAOs2D) {
-    glDeleteVertexArrays(1, &pair.second);
-  }
-  for (auto &pair : VBOs2D) {
-    glDeleteBuffers(1, &pair.second);
-  }
   for (auto &pair : VAOs3D) {
     glDeleteVertexArrays(1, &pair.second);
   }
   for (auto &pair : VBOs3D) {
     glDeleteBuffers(1, &pair.second);
   }
-
-  checkGLError("Cleanup");
 }
 
 void RenderSystem::update(float deltaTime, EntityManager &entityManager,
                           ComponentManager &componentManager) {
 
-  // Clear depth buffer
+  // Clear buffers
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  // Render 2D objects
-
-  shader2D->use();
-  shader2D->setMat4("projection", glm::value_ptr(projection));
-  shader2D->setMat4("view", glm::value_ptr(view));
-
-  checkGLError("2D Shader use");
+  // Find the player entity
+  Position *playerPosition = nullptr;
+  Rotation *playerRotation = nullptr;
 
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
     const ComponentMask &mask = entityManager.getComponentMask(entity);
-
-    if (mask.test(ComponentType<Position>::ID()) &&
-        mask.test(ComponentType<Renderable2D>::ID()) &&
+    if (mask.test(ComponentType<PlayerControlled>::ID()) &&
+        mask.test(ComponentType<Position>::ID()) &&
         mask.test(ComponentType<Rotation>::ID())) {
-      auto *position = componentManager.getComponent<Position>(entity);
-      auto *renderable = componentManager.getComponent<Renderable2D>(entity);
-      auto *rotation = componentManager.getComponent<Rotation>(entity);
-
-      if (position && renderable && rotation) {
-
-        if (VAOs2D.find(entity) == VAOs2D.end()) {
-
-          float halfWidth = renderable->width / 2.0f;
-          float halfHeight = renderable->height / 2.0f;
-
-          GLfloat vertices[] = {
-              -halfWidth,          -halfHeight,         renderable->color.r,
-              renderable->color.g, renderable->color.b, halfWidth,
-              -halfHeight,         renderable->color.r, renderable->color.g,
-              renderable->color.b, halfWidth,           halfHeight,
-              renderable->color.r, renderable->color.g, renderable->color.b,
-              -halfWidth,          halfHeight,          renderable->color.r,
-              renderable->color.g, renderable->color.b,
-          };
-
-          GLuint indices[] = {0, 1, 2, 2, 3, 0};
-
-          GLuint VAO, VBO, EBO;
-          glGenVertexArrays(1, &VAO);
-          glGenBuffers(1, &VBO);
-          glGenBuffers(1, &EBO);
-
-          glBindVertexArray(VAO);
-          glBindBuffer(GL_ARRAY_BUFFER, VBO);
-          glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices,
-                       GL_STATIC_DRAW);
-          glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-          glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                       GL_STATIC_DRAW);
-
-          glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                                (void *)0);
-          glEnableVertexAttribArray(0);
-          glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
-                                (void *)(2 * sizeof(float)));
-          glEnableVertexAttribArray(1);
-          glBindVertexArray(0);
-
-          VAOs2D[entity] = VAO;
-          VBOs2D[entity] = VBO;
-        }
-
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(
-            model, glm::vec3(position->x, position->y, position->z));
-        model = model * glm::mat4_cast(rotation->quaternion);
-
-        shader2D->setMat4("model", glm::value_ptr(model));
-
-        glBindVertexArray(VAOs2D[entity]);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-        glBindVertexArray(0);
-
-        checkGLError("2D object render");
-      }
+      playerPosition = componentManager.getComponent<Position>(entity);
+      playerRotation = componentManager.getComponent<Rotation>(entity);
+      break;
     }
   }
 
-  // Render 3D models
+  if (playerPosition == nullptr || playerRotation == nullptr) {
+    std::cerr << "Error: No player entity found." << std::endl;
+    return;
+  }
 
+  // Set up the camera's view matrix
+  // Define a fixed offset for the camera relative to the player
+  glm::vec3 cameraOffset(0.0f, 5.0f, 15.0f); // Adjust these values as needed
+
+  // Get the player's forward vector
+  glm::vec3 forward = playerRotation->quaternion * glm::vec3(0.0f, 0.0f, -1.0f);
+
+  // Project forward vector onto XZ plane to ignore vertical rotation
+  forward.y = 0.0f;
+  forward = glm::normalize(forward);
+
+  // Compute the camera's position behind the player
+  glm::vec3 cameraPosition =
+      glm::vec3(playerPosition->x, playerPosition->y + cameraOffset.y,
+                playerPosition->z) -
+      forward * cameraOffset.z;
+
+  // Set the camera's target slightly above the player
+  glm::vec3 cameraTarget =
+      glm::vec3(playerPosition->x, playerPosition->y + cameraOffset.y / 2.0f,
+                playerPosition->z);
+
+  // Calculate the view matrix
+  glm::mat4 view =
+      glm::lookAt(cameraPosition, cameraTarget, glm::vec3(0.0f, 1.0f, 0.0f));
+
+  // Update the projection matrix if the window size changes
+  int width, height;
+  glfwGetFramebufferSize(window, &width, &height);
+  if (height == 0)
+    height = 1; // Prevent division by zero
+  float aspectRatio = (float)width / (float)height;
+  projection =
+      glm::perspective(glm::radians(45.0f), aspectRatio, 0.1f, 1000.0f);
+
+  // Render 3D models
   shader3D->use();
   shader3D->setMat4("projection", glm::value_ptr(projection));
   shader3D->setMat4("view", glm::value_ptr(view));
@@ -200,7 +142,7 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
   shader3D->setVec3("lightDir", lightDirection.x, lightDirection.y,
                     lightDirection.z);
   shader3D->setVec3("lightColor", lightColor.r, lightColor.g, lightColor.b);
-  shader3D->setFloat("ambientStrength", 0.5f); // Ambient light
+  shader3D->setFloat("ambientStrength", 0.5f);
 
   for (EntityID entity = 0; entity < entityManager.entityCount(); ++entity) {
     const ComponentMask &mask = entityManager.getComponentMask(entity);
@@ -211,9 +153,21 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
       auto *position = componentManager.getComponent<Position>(entity);
       auto *renderable = componentManager.getComponent<Renderable3D>(entity);
       auto *material = componentManager.getComponent<Material>(entity);
-      auto *rotation = componentManager.getComponent<Rotation>(entity);
 
-      if (position && renderable && material && rotation) {
+      // Retrieve rotation component if it exists
+      Rotation *rotation = nullptr;
+      if (mask.test(ComponentType<Rotation>::ID())) {
+        rotation = componentManager.getComponent<Rotation>(entity);
+      }
+
+      // Retrieve scale component if it exists
+      Scale *scaleComp = nullptr;
+      if (mask.test(ComponentType<Scale>::ID())) {
+        scaleComp = componentManager.getComponent<Scale>(entity);
+      }
+
+      if (position && renderable && material) {
+        // Initialize VAO and VBO if not already done
         if (VAOs3D.find(entity) == VAOs3D.end()) {
           GLuint VAO, VBO, EBO;
           glGenVertexArrays(1, &VAO);
@@ -253,27 +207,44 @@ void RenderSystem::update(float deltaTime, EntityManager &entityManager,
           VBOs3D[entity] = VBO;
         }
 
+        // Build the model matrix
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(
-            model, glm::vec3(position->x, position->y, position->z));
-        model = model * glm::mat4_cast(rotation->quaternion);
 
+        // Apply transformations: Scale -> Rotate -> Translate
+
+        // Apply scaling
+        if (scaleComp) {
+          model = glm::scale(model, scaleComp->scale);
+        }
+
+        // Apply rotation
+        if (rotation) {
+          model = model * glm::mat4_cast(rotation->quaternion);
+        }
+
+        // Apply translation
+        model =
+            glm::translate(glm::mat4(1.0f),
+                           glm::vec3(position->x, position->y, position->z)) *
+            model;
+
+        // Set the model matrix in the shader
         shader3D->setMat4("model", glm::value_ptr(model));
 
+        // Set material properties
         shader3D->setVec3("objectColor", material->diffuseColor.r,
                           material->diffuseColor.g, material->diffuseColor.b);
         shader3D->setFloat("specularStrength", material->specularStrength);
         shader3D->setFloat("shininess", material->shininess);
 
+        // Render the model
         glBindVertexArray(VAOs3D[entity]);
         glDrawElements(GL_TRIANGLES, renderable->indices.size(),
                        GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
-
-        checkGLError("3D object render");
       }
     }
   }
 }
 
-#endif
+#endif // RENDER_SYSTEM_H
