@@ -4,7 +4,7 @@
 
 ## Description
 
-**⬜ CloudFire 🟧** is an immersive 3D platformer where you embody a fiery elemental navigating through a series of floating clouds. As a vibrant orange cube, your mission is to skillfully platform across white clouds, ascending to reach the highest cloud in the sky. Test your agility and precision as you maneuver through dynamic environments, overcoming obstacles and mastering the art of aerial navigation in a visually captivating setting.
+**⬜ CloudFire 🟧** is an immersive 3D platformer where you embody a fiery elemental navigating through a series of floating clouds. As a vibrant orange cube, your mission is to skillfully platform across white clouds, ascending to reach the highest cloud in the sky. Test your agility and precision as you maneuver through procedurally-generated environments, overcoming obstacles and mastering the art of aerial navigation in a visually captivating setting.
 
 ### Gameplay Features
 
