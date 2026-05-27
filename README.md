@@ -71,6 +71,7 @@ Ensure you have the following dependencies installed:
 - **Assimp:** For loading 3D models.
 - **stb Libraries:** For image loading (textures).
 - **GLM:** For mathematical operations (vectors, matrices, quaternions).
+- **SDL2 / SDL2_mixer:** Linked by the build for audio support.
 
 ### Installation of Dependencies (macOS)
 
@@ -81,7 +82,7 @@ Since the project has been primarily tested on macOS, here are the installation 
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
 # Install dependencies
-brew install glfw assimp glm
+brew install glfw assimp glm sdl2 sdl2_mixer
 ```
 
 ### Compilation
